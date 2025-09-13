@@ -1,0 +1,158 @@
+```
+---
+author:
+  name: Овезов Мерген
+  affiliation:
+    - name: Учебный центр / ВУЗ
+      country: Российская Федерация
+title: "Отчёт по индивидуальному проекту — Этап 2"
+subtitle: "Установка и настройка DVWA"
+license: "CC BY"
+format: pdf
+---
+
+# Цель работы
+
+Установить и настроить DVWA (Damn Vulnerable Web Application) в Kali Linux, подготовить тестовую платформу для изучения уязвимостей веб‑приложений.
+
+# Задание
+
+1. Настроить рабочее зеркало Kali и обновить систему.
+2. Установить LAMP‑окружение (Apache, MariaDB, PHP) и Git.
+3. Загрузить DVWA (основным и резервным способом).
+4. Настроить конфигурацию и базу данных DVWA.
+5. Проверить работоспособность приложения.
+
+# Теоретическое введение
+
+**DVWA** — это веб‑приложение, специально созданное для обучения и тестирования уязвимостей.  
+**LAMP‑стек** (Linux, Apache, MariaDB, PHP) обеспечивает серверную платформу для работы DVWA.
+
+# Выполнение работы
+
+## 2.1 Настройка репозиториев и обновление системы
+```bash
+sudo nano /etc/apt/sources.list
+# Добавлены строки:
+deb http://mirror.karneval.cz/pub/linux/kali kali-rolling main contrib non-free non-free-firmware
+deb-src http://mirror.karneval.cz/pub/linux/kali kali-rolling main contrib non-free non-free-firmware
+
+sudo apt clean
+sudo apt -o Acquire::ForceIPv4=true update
+sudo apt -y upgrade
+```
+_Рис. 1: успешное обновление пакетов_
+
+---
+
+## 2.2 Установка необходимых пакетов (LAMP + Git)
+```bash
+sudo apt install apache2 mariadb-server php php-mysql php-gd libapache2-mod-php git -y
+apache2 -v
+php -v
+mysql --version
+php -m | grep -E "mysqli|gd"
+```
+_Рис. 2: установка и проверка окружения_
+
+---
+
+## 2.3 Загрузка DVWA
+
+### 2.3.1 Основной способ — `git clone`
+```bash
+cd /var/www/html
+sudo rm index.html
+sudo git clone https://github.com/digininja/DVWA.git
+```
+_Рис. 3: успешное клонирование DVWA_
+
+---
+
+### 2.3.2 Резервный способ — `wget + unzip`
+```bash
+sudo apt install -y wget unzip
+cd /var/www/html
+sudo rm index.html
+wget https://github.com/digininja/DVWA/archive/refs/heads/master.zip
+unzip master.zip
+mv DVWA-master DVWA
+rm master.zip
+```
+_Рис. 4: установка DVWA из ZIP‑архива_
+
+---
+
+### 2.3.3 Проверка содержимого
+```bash
+ls /var/www/html/DVWA
+```
+_Рис. 5: структура каталога DVWA_
+
+---
+
+## 2.4 Настройка конфигурации DVWA
+```bash
+cd DVWA/config
+sudo cp config.inc.php.dist config.inc.php
+sudo nano config.inc.php
+```
+В файле:
+```php
+$_DVWA[ 'db_user' ] = 'root';
+$_DVWA[ 'db_password' ] = '';
+$_DVWA[ 'db_database' ] = 'dvwa';
+```
+_Рис. 6: редактирование config.inc.php_
+
+---
+
+## 2.5 Создание базы данных DVWA
+```bash
+sudo service mariadb start
+sudo mysql -u root -p
+```
+В консоли MySQL:
+```sql
+CREATE DATABASE dvwa;
+GRANT ALL PRIVILEGES ON dvwa.* TO 'root'@'localhost' IDENTIFIED BY '';
+FLUSH PRIVILEGES;
+EXIT;
+```
+_Рис. 7: создание базы данных_
+
+---
+
+## 2.6 Настройка прав и перезапуск Apache
+```bash
+sudo chown -R www-data:www-data /var/www/html/DVWA/
+sudo chmod -R 755 /var/www/html/DVWA/
+sudo service apache2 restart
+```
+_Рис. 8: установка прав и перезапуск Apache_
+
+---
+
+## 2.7 Первый запуск DVWA
+В браузере:
+```
+http://127.0.0.1/DVWA/setup.php
+```
+- Нажать **Create / Reset Database**  
+- Логин: `admin`  
+- Пароль: `password`
+
+_Рис. 9: первый вход в DVWA_
+
+---
+
+# Выводы
+
+DVWA успешно установлено и настроено. Окружение готово для тестирования уязвимостей.  
+Предусмотрен резервный способ установки на случай сетевых проблем.
+
+# Список литературы{.unnumbered}
+
+::: {#refs}
+:::
+```
